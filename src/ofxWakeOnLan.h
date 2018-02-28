@@ -41,12 +41,23 @@ public:
     void excute()
     {
         for(int i=0; i<targetHostMacAddress.size(); i++){
+            
             makeMagicPacket(targetHostMacAddress[i], &magicPacket[0]);
+            
+            /*for(int i=0; i<102; i++){
+                printf("%d ", magicPacket[i]);
+            }*/
             
             udp.Create();
             udp.SetEnableBroadcast(true);
             udp.Connect(broadcastAddress.c_str(), 7);
             udp.Send((char*)magicPacket, sizeof(uint8_t)*102);
+            udp.Send((char*)magicPacket, sizeof(uint8_t)*102);
+            udp.Close();
+            
+            udp.Create();
+            udp.SetEnableBroadcast(true);
+            udp.Connect(broadcastAddress.c_str(), 9);
             udp.Send((char*)magicPacket, sizeof(uint8_t)*102);
             udp.Send((char*)magicPacket, sizeof(uint8_t)*102);
             udp.Close();
