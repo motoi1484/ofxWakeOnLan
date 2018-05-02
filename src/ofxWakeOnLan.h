@@ -12,6 +12,7 @@
 #include "ofMain.h"
 #include "ofxNetwork.h"
 
+
 class ofxWakeOnLan
 {
 public:
