@@ -9,5 +9,6 @@ wol.addTargetHost(TARGET_MACADDRESS); //add target computer MAC address, multipl
 wol.setBroadCastAddress("127.0.0.255"); //set broad cast address
 
 wol.excute(); //send MagicPacket to host
+
 ~~~
 
