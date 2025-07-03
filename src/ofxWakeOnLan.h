@@ -39,7 +39,7 @@ public:
         }
     }
     
-    void excute()
+    void execute()
     {
         for(int i=0; i<targetHostMacAddress.size(); i++){
             
@@ -51,16 +51,13 @@ public:
             
             udp.Create();
             udp.SetEnableBroadcast(true);
+            
             udp.Connect(broadcastAddress.c_str(), 7);
             udp.Send((char*)magicPacket, sizeof(uint8_t)*102);
-            udp.Send((char*)magicPacket, sizeof(uint8_t)*102);
-            udp.Close();
             
-            udp.Create();
-            udp.SetEnableBroadcast(true);
             udp.Connect(broadcastAddress.c_str(), 9);
             udp.Send((char*)magicPacket, sizeof(uint8_t)*102);
-            udp.Send((char*)magicPacket, sizeof(uint8_t)*102);
+            
             udp.Close();
         }
     
