@@ -6,9 +6,9 @@ void ofApp::setup(){
     //setup wol
     wol.addTargetHost("3d:3d:3d:3d:3d:3d:"); //set target MAC address
     wol.setBroadCastAddress("127.0.0.255"); //set broadcast address
+    wol.setPacketSendCount(2); //set number of packets to send per port (default: 1)
     
-    //excute
-    wol.excute(); //excute send wake on lan magic packet
+    wol.execute(); //execute send wake on lan magic packet
     
 }
 

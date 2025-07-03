@@ -19,7 +19,7 @@ public:
     
     ofxWakeOnLan()
     {
-    
+        packetSendCount = 1;
     }
     
     ~ofxWakeOnLan()
@@ -32,6 +32,13 @@ public:
         broadcastAddress = address;
     }
     
+    void setPacketSendCount(int count)
+    {
+        if(count > 0){
+            packetSendCount = count;
+        }
+    }
+    
     void addTargetHost(string hostMacAddress)
     {
         if(hostMacAddress != ""){
@@ -39,7 +46,7 @@ public:
         }
     }
     
-    void excute()
+    void execute()
     {
         for(int i=0; i<targetHostMacAddress.size(); i++){
             
@@ -51,16 +58,17 @@ public:
             
             udp.Create();
             udp.SetEnableBroadcast(true);
-            udp.Connect(broadcastAddress.c_str(), 7);
-            udp.Send((char*)magicPacket, sizeof(uint8_t)*102);
-            udp.Send((char*)magicPacket, sizeof(uint8_t)*102);
-            udp.Close();
             
-            udp.Create();
-            udp.SetEnableBroadcast(true);
+            udp.Connect(broadcastAddress.c_str(), 7);
+            for(int j=0; j<packetSendCount; j++){
+                udp.Send((char*)magicPacket, sizeof(uint8_t)*102);
+            }
+            
             udp.Connect(broadcastAddress.c_str(), 9);
-            udp.Send((char*)magicPacket, sizeof(uint8_t)*102);
-            udp.Send((char*)magicPacket, sizeof(uint8_t)*102);
+            for(int j=0; j<packetSendCount; j++){
+                udp.Send((char*)magicPacket, sizeof(uint8_t)*102);
+            }
+            
             udp.Close();
         }
     
@@ -71,6 +79,7 @@ private:
     vector<string> targetHostMacAddress;
     ofxUDPManager udp;
     string broadcastAddress;
+    int packetSendCount;
     
     void makeMagicPacket(string macAdd, uint8_t* packet)
     {
