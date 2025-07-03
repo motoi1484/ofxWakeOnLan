@@ -1,16 +1,16 @@
-# ofxWakeOnLan Efficiency Analysis Report
+# ofxWakeOnLan 効率性分析レポート
 
-## Overview
-This report documents efficiency issues identified in the ofxWakeOnLan codebase and provides recommendations for improvement.
+## 概要
+このレポートは、ofxWakeOnLanコードベースで特定された効率性の問題を文書化し、改善の推奨事項を提供します。
 
-## Identified Efficiency Issues
+## 特定された効率性の問題
 
-### 1. **HIGH PRIORITY: Redundant UDP Connection Creation/Teardown**
-**Location:** `src/ofxWakeOnLan.h`, lines 52-64 in `excute()` method
+### 1. **高優先度: 冗長なUDP接続の作成/切断**
+**場所:** `src/ofxWakeOnLan.h`, `excute()`メソッドの52-64行目
 
-**Issue:** For each target host, the code creates and destroys UDP connections twice - once for port 7 and once for port 9. This is inefficient as it involves unnecessary system calls.
+**問題:** 各ターゲットホストに対して、コードはUDP接続を2回作成・破棄します - ポート7用に1回、ポート9用に1回。これは不要なシステムコールを含むため非効率的です。
 
-**Current Code:**
+**現在のコード:**
 ```cpp
 udp.Create();
 udp.SetEnableBroadcast(true);
@@ -27,74 +27,74 @@ udp.Send((char*)magicPacket, sizeof(uint8_t)*102);
 udp.Close();
 ```
 
-**Impact:** For N target hosts, this creates 2N UDP connections instead of N connections.
+**影響:** Nターゲットホストに対して、N接続の代わりに2N UDP接続を作成します。
 
-**Recommendation:** Reuse UDP connection and send to both ports sequentially.
+**推奨事項:** UDP接続を再利用し、両方のポートに順次送信する。
 
-### 2. **HIGH PRIORITY: Duplicate Packet Sending**
-**Location:** `src/ofxWakeOnLan.h`, lines 55-56 and 62-63
+### 2. **高優先度: 重複パケット送信**
+**場所:** `src/ofxWakeOnLan.h`, 55-56行目と62-63行目
 
-**Issue:** The code sends each magic packet twice to each port without clear justification. Wake-on-LAN protocol typically requires only one packet per port.
+**問題:** コードは各マジックパケットを各ポートに2回送信しますが、明確な理由がありません。Wake-on-LANプロトコルは通常、ポートごとに1つのパケットのみを必要とします。
 
-**Impact:** Doubles network traffic unnecessarily.
+**影響:** ネットワークトラフィックを不必要に2倍にします。
 
-**Recommendation:** Send packet once per port unless reliability requires duplication (should be configurable).
+**推奨事項:** 信頼性が重複を必要としない限り、ポートごとに1回パケットを送信する（設定可能にすべき）。
 
-### 3. **MEDIUM PRIORITY: Method Name Typo**
-**Location:** `src/ofxWakeOnLan.h`, line 42 and usage in example
+### 3. **中優先度: メソッド名のタイポ**
+**場所:** `src/ofxWakeOnLan.h`, 42行目と例での使用
 
-**Issue:** Method is named `excute()` instead of `execute()`.
+**問題:** メソッドが`execute()`ではなく`excute()`と名付けられています。
 
-**Impact:** Poor code readability and professionalism.
+**影響:** コードの可読性とプロフェッショナリズムの低下。
 
-**Recommendation:** Rename to `execute()` and update all references.
+**推奨事項:** `execute()`にリネームし、すべての参照を更新する。
 
-### 4. **MEDIUM PRIORITY: Inefficient MAC Address Parsing**
-**Location:** `src/ofxWakeOnLan.h`, lines 89-102 in `convertMacAddress()`
+### 4. **中優先度: 非効率的なMACアドレス解析**
+**場所:** `src/ofxWakeOnLan.h`, `convertMacAddress()`の89-102行目
 
-**Issue:** Uses string splitting and multiple conversions that could be optimized.
+**問題:** 最適化可能な文字列分割と複数の変換を使用しています。
 
-**Current approach:** Split by ":", then convert each part using `strtol()`
+**現在のアプローチ:** ":"で分割し、各部分を`strtol()`で変換
 
-**Recommendation:** Direct parsing without intermediate string vector creation.
+**推奨事項:** 中間文字列ベクター作成なしの直接解析。
 
-### 5. **LOW PRIORITY: Fixed-size Magic Packet Array as Class Member**
-**Location:** `src/ofxWakeOnLan.h`, line 104
+### 5. **低優先度: クラスメンバーとしての固定サイズマジックパケット配列**
+**場所:** `src/ofxWakeOnLan.h`, 104行目
 
-**Issue:** Magic packet array is a class member when it could be a local variable in the method that uses it.
+**問題:** マジックパケット配列は、それを使用するメソッドのローカル変数にできるのにクラスメンバーになっています。
 
-**Impact:** Unnecessary memory usage when class instance is not actively sending packets.
+**影響:** クラスインスタンスがパケットを積極的に送信していない時の不要なメモリ使用。
 
-**Recommendation:** Move to local scope in `makeMagicPacket()` method.
+**推奨事項:** `makeMagicPacket()`メソッドのローカルスコープに移動する。
 
-### 6. **LOW PRIORITY: Missing Input Validation**
-**Location:** `src/ofxWakeOnLan.h`, `setBroadCastAddress()` method
+### 6. **低優先度: 入力検証の欠如**
+**場所:** `src/ofxWakeOnLan.h`, `setBroadCastAddress()`メソッド
 
-**Issue:** No validation of broadcast address format.
+**問題:** ブロードキャストアドレス形式の検証がありません。
 
-**Impact:** Runtime errors if invalid address is provided.
+**影響:** 無効なアドレスが提供された場合のランタイムエラー。
 
-**Recommendation:** Add basic IP address format validation.
+**推奨事項:** 基本的なIPアドレス形式検証を追加する。
 
-## Performance Impact Summary
+## パフォーマンス影響の要約
 
-| Issue | Severity | Performance Impact | Implementation Effort |
-|-------|----------|-------------------|---------------------|
-| Redundant UDP connections | High | 2x system calls | Low |
-| Duplicate packet sending | High | 2x network traffic | Low |
-| Method name typo | Medium | Code quality | Low |
-| MAC address parsing | Medium | String processing overhead | Medium |
-| Fixed-size array | Low | Memory usage | Low |
-| Input validation | Low | Error prevention | Medium |
+| 問題 | 重要度 | パフォーマンス影響 | 実装工数 |
+|------|--------|-------------------|----------|
+| 冗長なUDP接続 | 高 | 2倍のシステムコール | 低 |
+| 重複パケット送信 | 高 | 2倍のネットワークトラフィック | 低 |
+| メソッド名タイポ | 中 | コード品質 | 低 |
+| MACアドレス解析 | 中 | 文字列処理オーバーヘッド | 中 |
+| 固定サイズ配列 | 低 | メモリ使用量 | 低 |
+| 入力検証 | 低 | エラー防止 | 中 |
 
-## Recommended Fix Priority
+## 推奨修正優先度
 
-1. **Fix redundant UDP connections and duplicate sending** - Highest impact, lowest effort
-2. **Fix method name typo** - Important for code quality
-3. **Optimize MAC address parsing** - Medium impact improvement
-4. **Add input validation** - Defensive programming
-5. **Optimize memory usage** - Minor improvement
+1. **冗長なUDP接続と重複送信の修正** - 最高影響、最低工数
+2. **メソッド名タイポの修正** - コード品質にとって重要
+3. **MACアドレス解析の最適化** - 中程度の影響改善
+4. **入力検証の追加** - 防御的プログラミング
+5. **メモリ使用量の最適化** - 軽微な改善
 
-## Conclusion
+## 結論
 
-The most significant efficiency gains can be achieved by addressing the UDP connection handling and packet duplication issues. These changes would reduce system calls by 50% and network traffic by 50% while maintaining full protocol compliance.
+最も重要な効率性向上は、UDP接続処理とパケット重複問題に対処することで達成できます。これらの変更により、完全なプロトコル準拠を維持しながら、システムコールを50%、ネットワークトラフィックを50%削減できます。
